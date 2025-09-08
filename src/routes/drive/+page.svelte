@@ -648,7 +648,7 @@
 							class="btn btn-test"
 							onclick={testOptimizationPreview}
 							disabled={isSimulating}
-							title="로컬 알고리즘으로 최적화 테스트"
+							title="파일을 확장자별로 분류하여 정리"
 						>
 							<svg
 								width="20"
@@ -658,13 +658,14 @@
 								stroke="currentColor"
 								stroke-width="2"
 							>
-								<circle cx="12" cy="12" r="10" />
-								<polyline points="12,6 12,12 16,14" />
+								<path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+								<path d="M8 21v-4a2 2 0 012-2h4a2 2 0 012 2v4"/>
+								<path d="M7 7h10"/>
 							</svg>
 							{#if isSimulating}
-								테스트 중...
+								분류 중...
 							{:else}
-								최적화 테스트
+								유형별 분류
 							{/if}
 						</button>
 						<button class="btn btn-secondary" onclick={signOut} title="Google Drive 연결 해제">
@@ -921,14 +922,14 @@
 	<div class="modal-overlay" onclick={closePreviewModal}>
 		<div class="modal-content large-modal" onclick={(e) => e.stopPropagation()}>
 			<div class="modal-header">
-				<h3>🔬 최적화 테스트 미리보기</h3>
+				<h3>📋 유형별 분류 미리보기</h3>
 				<button class="modal-close" onclick={closePreviewModal}>×</button>
 			</div>
 
 			<div class="modal-body">
 				<div class="preview-info">
-					<p>실제 AI API 대신 로컬 최적화 알고리즘을 사용한 테스트입니다.</p>
-					<p>실제 파일은 이동되지 않으며, 최적화 결과만 미리볼 수 있습니다.</p>
+					<p>파일을 확장자별로 분류하여 정리하는 방식입니다.</p>
+					<p>기존 폴더 구조를 무시하고 파일 확장자만으로 새로운 폴더를 생성합니다.</p>
 				</div>
 
 				<StructureComparisonView comparison={structureComparison} />

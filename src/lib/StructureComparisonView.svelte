@@ -36,6 +36,12 @@
 				<strong>새 폴더:</strong>
 				{comparison?.changes.newFolders?.length || 0}개
 			</div>
+			{#if comparison?.changes.deletedFolders?.length > 0}
+				<div class="stat-item danger">
+					<strong>삭제될 폴더:</strong>
+					{comparison.changes.deletedFolders.length}개
+				</div>
+			{/if}
 		</div>
 	</div>
 
@@ -69,6 +75,21 @@
 						<span class="folder-icon">📁</span>
 						<span class="folder-name">{newFolder.name}</span>
 						<span class="folder-path">({newFolder.path})</span>
+					</div>
+				{/each}
+			</div>
+		</div>
+	{/if}
+
+	{#if comparison?.changes.deletedFolders?.length > 0}
+		<div class="deleted-folders-section">
+			<h5>🗑️ 삭제될 폴더들</h5>
+			<div class="deleted-folders-list">
+				{#each comparison.changes.deletedFolders as deletedFolder}
+					<div class="deleted-folder-item">
+						<span class="folder-icon">🗑️</span>
+						<span class="folder-name">{deletedFolder.name}</span>
+						<span class="folder-path">({deletedFolder.path})</span>
 					</div>
 				{/each}
 			</div>
@@ -164,13 +185,23 @@
 		font-weight: 500;
 	}
 
+	.stat-item.danger {
+		color: #ff3b30;
+	}
+
+	.stat-item.danger strong {
+		color: #ff3b30;
+	}
+
 	.moved-files-section,
-	.new-folders-section {
+	.new-folders-section,
+	.deleted-folders-section {
 		margin-bottom: 32px;
 	}
 
 	.moved-files-section h5,
-	.new-folders-section h5 {
+	.new-folders-section h5,
+	.deleted-folders-section h5 {
 		margin: 0 0 16px 0;
 		color: #1d1d1f;
 		font-size: 19px;
@@ -179,7 +210,8 @@
 	}
 
 	.moved-files-list,
-	.new-folders-list {
+	.new-folders-list,
+	.deleted-folders-list {
 		border: 1px solid rgba(0, 0, 0, 0.08);
 		border-radius: 12px;
 		max-height: 240px;
@@ -188,8 +220,14 @@
 		backdrop-filter: saturate(180%) blur(20px);
 	}
 
+	.deleted-folders-list {
+		background: rgba(255, 59, 48, 0.05);
+		border: 1px solid rgba(255, 59, 48, 0.2);
+	}
+
 	.moved-file-item,
-	.new-folder-item {
+	.new-folder-item,
+	.deleted-folder-item {
 		padding: 16px 20px;
 		border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 		display: flex;
@@ -199,17 +237,24 @@
 	}
 
 	.moved-file-item:hover,
-	.new-folder-item:hover {
+	.new-folder-item:hover,
+	.deleted-folder-item:hover {
 		background: rgba(0, 0, 0, 0.02);
 	}
 
+	.deleted-folder-item:hover {
+		background: rgba(255, 59, 48, 0.1);
+	}
+
 	.moved-file-item:last-child,
-	.new-folder-item:last-child {
+	.new-folder-item:last-child,
+	.deleted-folder-item:last-child {
 		border-bottom: none;
 	}
 
 	.file-info,
-	.new-folder-item {
+	.new-folder-item,
+	.deleted-folder-item {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;

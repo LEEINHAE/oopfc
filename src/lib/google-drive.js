@@ -847,229 +847,98 @@ function topologicalSortFolders(folders) {
 }
 
 /**
- * 테스트용 최적화 시뮬레이션 (AI API 없이 로컬에서 실행)
- * 의도적으로 많은 변경사항을 만들어 테스트하기 쉽게 함
+ * 테스트용 최적화 시뮬레이션 (확장자별 파일 분류)
+ * 기존 폴더 구조를 무시하고 확장자별로 파일들을 정리
  */
 export function simulateOptimization(files) {
-	// 깊은 복사로 파일 객체들을 복사
-	const optimizedFiles = files.map((file) => ({
-		...file,
-		parents: file.parents ? [...file.parents] : ["root"],
-		children: []
-	}))
+	console.log("🧪 시뮬레이션 시작 - 파일들을 확장자별로 정리...")
 
-	const newFolders = []
-	const currentYear = new Date().getFullYear()
+	// 확장자별로 파일들을 분류
+	const extensionGroups = {}
+	const foldersIgnored = []
+	const noExtensionFiles = []
 
-	// 파일 타입별 분류
-	const folders = optimizedFiles.filter((f) => f.mimeType === "application/vnd.google-apps.folder")
-	const documents = optimizedFiles.filter(
-		(f) => f.mimeType === "application/vnd.google-apps.document"
-	)
-	const spreadsheets = optimizedFiles.filter(
-		(f) => f.mimeType === "application/vnd.google-apps.spreadsheet"
-	)
-	const presentations = optimizedFiles.filter(
-		(f) => f.mimeType === "application/vnd.google-apps.presentation"
-	)
-	const pdfs = optimizedFiles.filter((f) => f.mimeType === "application/pdf")
-	const images = optimizedFiles.filter((f) => f.mimeType?.startsWith("image/"))
-	const videos = optimizedFiles.filter((f) => f.mimeType?.startsWith("video/"))
-	const otherFiles = optimizedFiles.filter(
-		(f) =>
-			f.mimeType !== "application/vnd.google-apps.folder" &&
-			f.mimeType !== "application/vnd.google-apps.document" &&
-			f.mimeType !== "application/vnd.google-apps.spreadsheet" &&
-			f.mimeType !== "application/vnd.google-apps.presentation" &&
-			f.mimeType !== "application/pdf" &&
-			!f.mimeType?.startsWith("image/") &&
-			!f.mimeType?.startsWith("video/")
-	)
+	files.forEach((file) => {
+		if (file.mimeType === "application/vnd.google-apps.folder") {
+			// 폴더는 무시 (새로운 구조에서는 필요 없음)
+			foldersIgnored.push(file)
+			return
+		}
 
-	// 📁 "워크 스페이스" 메인 폴더 생성 (모든 파일을 정리하기 위한 최상위 폴더)
-	const workspaceFolderId = `temp_workspace_${currentYear}`
-	newFolders.push({
-		id: workspaceFolderId,
-		name: "🏢 워크 스페이스",
-		mimeType: "application/vnd.google-apps.folder",
-		parents: ["root"],
-		createdTime: new Date().toISOString(),
-		modifiedTime: new Date().toISOString(),
-		webViewLink: null,
-		children: []
+		const fileName = file.name
+		const lastDotIndex = fileName.lastIndexOf('.')
+		
+		if (lastDotIndex === -1 || lastDotIndex === fileName.length - 1) {
+			// 확장자가 없는 파일들
+			noExtensionFiles.push({
+				...file,
+				parents: ["temp_no_extension_folder"],
+				children: []
+			})
+			return
+		}
+
+		const extension = fileName.substring(lastDotIndex).toLowerCase()
+		
+		if (!extensionGroups[extension]) {
+			extensionGroups[extension] = []
+		}
+		
+		extensionGroups[extension].push({
+			...file,
+			parents: [`temp_${extension.replace('.', '')}_folder`],
+			children: []
+		})
 	})
 
-	// 1. 문서 폴더 생성 (문서가 1개 이상만 있어도 생성)
-	if (documents.length >= 1) {
-		const docFolderId = `temp_documents_${currentYear}`
-		newFolders.push({
-			id: docFolderId,
-			name: "📝 문서",
+	// 최적화된 파일 구조 생성
+	const optimizedFiles = []
+
+	// 확장자별 폴더 생성 및 파일 추가
+	Object.entries(extensionGroups).forEach(([extension, extensionFiles]) => {
+		const folderName = `${extension.toUpperCase()} 파일`
+		const folderId = `temp_${extension.replace('.', '')}_folder`
+
+		// 확장자별 폴더 생성
+		optimizedFiles.push({
+			id: folderId,
+			name: folderName,
 			mimeType: "application/vnd.google-apps.folder",
-			parents: [workspaceFolderId], // 워크스페이스 하위에 생성
+			parents: ["root"],
 			createdTime: new Date().toISOString(),
 			modifiedTime: new Date().toISOString(),
 			webViewLink: null,
-			children: []
+			children: extensionFiles
 		})
 
-		// 모든 문서를 새 폴더로 이동
-		documents.forEach((doc) => {
-			doc.parents = [docFolderId]
-		})
-	}
+		// 파일들 추가
+		optimizedFiles.push(...extensionFiles)
+	})
 
-	// 2. 스프레드시트 폴더 생성 (1개 이상)
-	if (spreadsheets.length >= 1) {
-		const sheetFolderId = `temp_spreadsheets_${currentYear}`
-		newFolders.push({
-			id: sheetFolderId,
-			name: "📊 데이터 & 분석",
+	// 확장자가 없는 파일들이 있으면 별도 폴더 생성
+	if (noExtensionFiles.length > 0) {
+		optimizedFiles.push({
+			id: "temp_no_extension_folder",
+			name: "확장자 없음",
 			mimeType: "application/vnd.google-apps.folder",
-			parents: [workspaceFolderId],
+			parents: ["root"],
 			createdTime: new Date().toISOString(),
 			modifiedTime: new Date().toISOString(),
 			webViewLink: null,
-			children: []
+			children: noExtensionFiles
 		})
-
-		// 모든 스프레드시트를 새 폴더로 이동
-		spreadsheets.forEach((sheet) => {
-			sheet.parents = [sheetFolderId]
-		})
+		optimizedFiles.push(...noExtensionFiles)
 	}
 
-	// 3. 프레젠테이션 폴더 생성 (1개 이상)
-	if (presentations.length >= 1) {
-		const presentationFolderId = `temp_presentations_${currentYear}`
-		newFolders.push({
-			id: presentationFolderId,
-			name: "📽️ 발표 자료",
-			mimeType: "application/vnd.google-apps.folder",
-			parents: [workspaceFolderId],
-			createdTime: new Date().toISOString(),
-			modifiedTime: new Date().toISOString(),
-			webViewLink: null,
-			children: []
-		})
+	console.log("✨ 시뮬레이션 완료!")
+	console.log("📊 확장자별 파일 분류:")
+	Object.entries(extensionGroups).forEach(([ext, files]) => {
+		console.log(`  ${ext}: ${files.length}개 파일`)
+	})
+	console.log("📄 확장자 없는 파일:", noExtensionFiles.length, "개")
+	console.log("📁 무시된 폴더:", foldersIgnored.length, "개")
 
-		presentations.forEach((pres) => {
-			pres.parents = [presentationFolderId]
-		})
-	}
-
-	// 4. PDF 폴더 생성 (1개 이상)
-	if (pdfs.length >= 1) {
-		const pdfFolderId = `temp_pdfs_${currentYear}`
-		newFolders.push({
-			id: pdfFolderId,
-			name: "📄 PDF 문서",
-			mimeType: "application/vnd.google-apps.folder",
-			parents: [workspaceFolderId],
-			createdTime: new Date().toISOString(),
-			modifiedTime: new Date().toISOString(),
-			webViewLink: null,
-			children: []
-		})
-
-		pdfs.forEach((pdf) => {
-			pdf.parents = [pdfFolderId]
-		})
-	}
-
-	// 5. 미디어 폴더 생성 (이미지나 비디오가 1개 이상)
-	if (images.length >= 1 || videos.length >= 1) {
-		const mediaFolderId = `temp_media_${currentYear}`
-		newFolders.push({
-			id: mediaFolderId,
-			name: "🎨 미디어",
-			mimeType: "application/vnd.google-apps.folder",
-			parents: [workspaceFolderId],
-			createdTime: new Date().toISOString(),
-			modifiedTime: new Date().toISOString(),
-			webViewLink: null,
-			children: []
-		})
-
-		// 이미지 하위 폴더 (1개 이상)
-		if (images.length >= 1) {
-			const imagesFolderId = `temp_images_${currentYear}`
-			newFolders.push({
-				id: imagesFolderId,
-				name: "🖼️ 이미지",
-				mimeType: "application/vnd.google-apps.folder",
-				parents: [mediaFolderId],
-				createdTime: new Date().toISOString(),
-				modifiedTime: new Date().toISOString(),
-				webViewLink: null,
-				children: []
-			})
-
-			images.forEach((img) => {
-				img.parents = [imagesFolderId]
-			})
-		}
-
-		// 비디오 하위 폴더 (1개 이상)
-		if (videos.length >= 1) {
-			const videosFolderId = `temp_videos_${currentYear}`
-			newFolders.push({
-				id: videosFolderId,
-				name: "🎥 비디오",
-				mimeType: "application/vnd.google-apps.folder",
-				parents: [mediaFolderId],
-				createdTime: new Date().toISOString(),
-				modifiedTime: new Date().toISOString(),
-				webViewLink: null,
-				children: []
-			})
-
-			videos.forEach((video) => {
-				video.parents = [videosFolderId]
-			})
-		}
-	}
-
-	// 6. 기타 파일들 폴더 생성 (1개 이상)
-	if (otherFiles.length >= 1) {
-		const miscFolderId = `temp_misc_${currentYear}`
-		newFolders.push({
-			id: miscFolderId,
-			name: "📂 기타 파일",
-			mimeType: "application/vnd.google-apps.folder",
-			parents: [workspaceFolderId],
-			createdTime: new Date().toISOString(),
-			modifiedTime: new Date().toISOString(),
-			webViewLink: null,
-			children: []
-		})
-
-		otherFiles.forEach((file) => {
-			file.parents = [miscFolderId]
-		})
-	}
-
-	// 7. 기존 폴더들도 워크스페이스로 이동 (강제 변경사항 생성)
-	const rootFolders = folders.filter((f) => f.parents?.includes("root") || !f.parents?.length)
-	if (rootFolders.length > 0) {
-		const existingFolderId = `temp_existing_folders_${currentYear}`
-		newFolders.push({
-			id: existingFolderId,
-			name: "📁 기존 폴더",
-			mimeType: "application/vnd.google-apps.folder",
-			parents: [workspaceFolderId],
-			createdTime: new Date().toISOString(),
-			modifiedTime: new Date().toISOString(),
-			webViewLink: null,
-			children: []
-		})
-
-		rootFolders.forEach((folder) => {
-			folder.parents = [existingFolderId]
-		})
-	}
-
-	return [...optimizedFiles, ...newFolders]
+	return optimizedFiles
 }
 
 /**
@@ -1079,9 +948,10 @@ export function generateStructureComparison(originalFiles, optimizedFiles) {
 	const originalStructure = organizeFilesAsTree(originalFiles)
 	const optimizedStructure = organizeFilesAsTree(optimizedFiles)
 
-	// 이동된 파일들과 새 폴더들 찾기
+	// 이동된 파일들, 새 폴더들, 삭제될 폴더들 찾기
 	const movedFiles = []
 	const newFolders = []
+	const deletedFolders = []
 	const originalParentMap = new Map()
 	const optimizedParentMap = new Map()
 
@@ -1096,8 +966,31 @@ export function generateStructureComparison(originalFiles, optimizedFiles) {
 		optimizedParentMap.set(file.id, parentId)
 	})
 
-	// 각 파일의 이동 여부 확인
+	// 원본에서 폴더들 찾기 (삭제 대상)
+	const originalFolders = originalFiles.filter(file => 
+		file.mimeType === "application/vnd.google-apps.folder"
+	)
+
+	// 최적화된 파일에서 원본 폴더 ID가 없는 경우 삭제된 것으로 간주
+	for (const folder of originalFolders) {
+		const existsInOptimized = optimizedFiles.some(file => file.id === folder.id)
+		if (!existsInOptimized) {
+			const folderPath = getFilePath(folder, originalFiles, originalParentMap)
+			deletedFolders.push({
+				id: folder.id,
+				name: folder.name,
+				path: folderPath,
+				mimeType: folder.mimeType
+			})
+		}
+	}
+
+	// 각 파일의 이동 여부 확인 (폴더가 아닌 파일만)
 	for (const file of originalFiles) {
+		if (file.mimeType === "application/vnd.google-apps.folder") {
+			continue // 폴더는 건너뛰기
+		}
+
 		const fileId = file.id
 		const originalParent = originalParentMap.get(fileId)
 		const optimizedParent = optimizedParentMap.get(fileId)
@@ -1135,8 +1028,11 @@ export function generateStructureComparison(originalFiles, optimizedFiles) {
 		changes: {
 			movedFiles,
 			newFolders,
-			totalFiles: originalFiles.length,
-			totalOptimizedFiles: optimizedFiles.length
+			deletedFolders,
+			totalFiles: originalFiles.filter(f => f.mimeType !== "application/vnd.google-apps.folder").length,
+			totalOptimizedFiles: optimizedFiles.filter(f => f.mimeType !== "application/vnd.google-apps.folder").length,
+			totalOriginalFolders: originalFolders.length,
+			totalDeletedFolders: deletedFolders.length
 		}
 	}
 }
