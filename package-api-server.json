@@ -1,0 +1,30 @@
+{
+  "name": "google-drive-ai-optimizer-api",
+  "version": "1.0.0",
+  "description": "AI-powered Google Drive folder structure optimization API",
+  "main": "sample-api-server.js",
+  "scripts": {
+    "start": "node sample-api-server.js",
+    "dev": "nodemon sample-api-server.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "google-drive",
+    "ai",
+    "file-organization",
+    "api",
+    "optimization"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
