@@ -37,72 +37,74 @@ npm start
 Google Drive 파일 구조를 AI로 최적화합니다.
 
 **요청 예시:**
+
 ```json
 {
-  "files": [
-    {
-      "id": "1ABC123...",
-      "name": "프로젝트 계획서.docx",
-      "mimeType": "application/vnd.google-apps.document",
-      "parents": ["root"],
-      "modifiedTime": "2024-01-01T12:00:00.000Z",
-      "createdTime": "2024-01-01T10:00:00.000Z",
-      "size": "1024",
-      "webViewLink": "https://docs.google.com/..."
-    }
-  ]
+	"files": [
+		{
+			"id": "1ABC123...",
+			"name": "프로젝트 계획서.docx",
+			"mimeType": "application/vnd.google-apps.document",
+			"parents": ["root"],
+			"modifiedTime": "2024-01-01T12:00:00.000Z",
+			"createdTime": "2024-01-01T10:00:00.000Z",
+			"size": "1024",
+			"webViewLink": "https://docs.google.com/..."
+		}
+	]
 }
 ```
 
 **응답 예시:**
+
 ```json
 {
-  "optimizedFiles": [
-    {
-      "id": "1ABC123...",
-      "name": "프로젝트 계획서.docx",
-      "mimeType": "application/vnd.google-apps.document",
-      "parents": ["temp_documents_2024"],
-      "modifiedTime": "2024-01-01T12:00:00.000Z",
-      "createdTime": "2024-01-01T10:00:00.000Z",
-      "size": "1024",
-      "webViewLink": "https://docs.google.com/..."
-    },
-    {
-      "id": "temp_documents_2024",
-      "name": "📝 문서",
-      "mimeType": "application/vnd.google-apps.folder",
-      "parents": ["root"],
-      "createdTime": "2024-01-01T15:00:00.000Z",
-      "modifiedTime": "2024-01-01T15:00:00.000Z",
-      "webViewLink": null
-    },
-    {
-      "id": "temp_media_2024",
-      "name": "🎨 미디어",
-      "mimeType": "application/vnd.google-apps.folder", 
-      "parents": ["root"],
-      "createdTime": "2024-01-01T15:00:00.000Z",
-      "modifiedTime": "2024-01-01T15:00:00.000Z",
-      "webViewLink": null
-    },
-    {
-      "id": "temp_images_2024",
-      "name": "🖼️ 이미지",
-      "mimeType": "application/vnd.google-apps.folder",
-      "parents": ["temp_media_2024"],
-      "createdTime": "2024-01-01T15:00:00.000Z", 
-      "modifiedTime": "2024-01-01T15:00:00.000Z",
-      "webViewLink": null
-    }
-  ],
-  "message": "Structure optimized successfully",
-  "changes": {
-    "filesReorganized": 1,
-    "foldersCreated": 3,
-    "totalFiles": 1
-  },
-  "timestamp": "2024-01-01T15:00:00.000Z"
+	"optimizedFiles": [
+		{
+			"id": "1ABC123...",
+			"name": "프로젝트 계획서.docx",
+			"mimeType": "application/vnd.google-apps.document",
+			"parents": ["temp_documents_2024"],
+			"modifiedTime": "2024-01-01T12:00:00.000Z",
+			"createdTime": "2024-01-01T10:00:00.000Z",
+			"size": "1024",
+			"webViewLink": "https://docs.google.com/..."
+		},
+		{
+			"id": "temp_documents_2024",
+			"name": "📝 문서",
+			"mimeType": "application/vnd.google-apps.folder",
+			"parents": ["root"],
+			"createdTime": "2024-01-01T15:00:00.000Z",
+			"modifiedTime": "2024-01-01T15:00:00.000Z",
+			"webViewLink": null
+		},
+		{
+			"id": "temp_media_2024",
+			"name": "🎨 미디어",
+			"mimeType": "application/vnd.google-apps.folder",
+			"parents": ["root"],
+			"createdTime": "2024-01-01T15:00:00.000Z",
+			"modifiedTime": "2024-01-01T15:00:00.000Z",
+			"webViewLink": null
+		},
+		{
+			"id": "temp_images_2024",
+			"name": "🖼️ 이미지",
+			"mimeType": "application/vnd.google-apps.folder",
+			"parents": ["temp_media_2024"],
+			"createdTime": "2024-01-01T15:00:00.000Z",
+			"modifiedTime": "2024-01-01T15:00:00.000Z",
+			"webViewLink": null
+		}
+	],
+	"message": "Structure optimized successfully",
+	"changes": {
+		"filesReorganized": 1,
+		"foldersCreated": 3,
+		"totalFiles": 1
+	},
+	"timestamp": "2024-01-01T15:00:00.000Z"
 }
 ```
 
@@ -117,23 +119,26 @@ API 정보를 확인합니다.
 ## 🆔 새 폴더 ID 처리 방식
 
 ### 문제
+
 AI가 새로운 폴더를 생성하도록 최적화할 경우, 아직 Google Drive에 존재하지 않는 폴더의 ID를 어떻게 처리할까요?
 
 ### 해결책
+
 **임시 ID (Temporary ID) 방식**을 사용합니다:
 
 1. **AI 응답**: 새 폴더는 `temp_` 접두사가 붙은 임시 ID 사용
+
    ```json
    {
-     "id": "temp_documents_2024",
-     "name": "📝 문서", 
-     "mimeType": "application/vnd.google-apps.folder",
-     "parents": ["root"],
-     "webViewLink": null
+   	"id": "temp_documents_2024",
+   	"name": "📝 문서",
+   	"mimeType": "application/vnd.google-apps.folder",
+   	"parents": ["root"],
+   	"webViewLink": null
    }
    ```
 
-2. **클라이언트 처리**: 
+2. **클라이언트 처리**:
    - 임시 ID를 가진 폴더들을 먼저 Google Drive에 실제 생성
    - 실제 생성된 폴더의 진짜 ID를 받아옴
    - 임시 ID → 실제 ID 매핑 테이블 생성
@@ -142,16 +147,16 @@ AI가 새로운 폴더를 생성하도록 최적화할 경우, 아직 Google Dri
 3. **중첩 폴더 처리**:
    ```json
    [
-     {
-       "id": "temp_media_2024",
-       "name": "미디어",
-       "parents": ["root"]
-     },
-     {
-       "id": "temp_images_2024", 
-       "name": "이미지",
-       "parents": ["temp_media_2024"]  // 부모도 임시 ID 참조
-     }
+   	{
+   		"id": "temp_media_2024",
+   		"name": "미디어",
+   		"parents": ["root"]
+   	},
+   	{
+   		"id": "temp_images_2024",
+   		"name": "이미지",
+   		"parents": ["temp_media_2024"] // 부모도 임시 ID 참조
+   	}
    ]
    ```
 
@@ -162,8 +167,9 @@ temp_[category]_[optional_suffix]
 ```
 
 **예시:**
+
 - `temp_documents_2024`
-- `temp_images_folder` 
+- `temp_images_folder`
 - `temp_archive_old_files`
 - `temp_project_work`
 - `temp_media_videos`
@@ -175,51 +181,53 @@ temp_[category]_[optional_suffix]
 ### 1. OpenAI API 사용 예시
 
 ```javascript
-const OpenAI = require('openai');
+const OpenAI = require("openai")
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+	apiKey: process.env.OPENAI_API_KEY
+})
 
 async function optimizeFilesWithAI(files) {
-  const prompt = `다음 Google Drive 파일들을 효율적으로 정리해주세요: ${JSON.stringify(files)}`;
-  
-  const response = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [
-      {
-        role: "system", 
-        content: "당신은 파일 정리 전문가입니다. Google Drive 파일 구조를 최적화하세요."
-      },
-      {
-        role: "user",
-        content: prompt
-      }
-    ]
-  });
+	const prompt = `다음 Google Drive 파일들을 효율적으로 정리해주세요: ${JSON.stringify(files)}`
 
-  return JSON.parse(response.choices[0].message.content);
+	const response = await openai.chat.completions.create({
+		model: "gpt-4",
+		messages: [
+			{
+				role: "system",
+				content: "당신은 파일 정리 전문가입니다. Google Drive 파일 구조를 최적화하세요."
+			},
+			{
+				role: "user",
+				content: prompt
+			}
+		]
+	})
+
+	return JSON.parse(response.choices[0].message.content)
 }
 ```
 
 ### 2. Claude API 사용 예시
 
 ```javascript
-const Anthropic = require('@anthropic-ai/sdk');
+const Anthropic = require("@anthropic-ai/sdk")
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+	apiKey: process.env.ANTHROPIC_API_KEY
+})
 
 async function optimizeFilesWithAI(files) {
-  const response = await anthropic.messages.create({
-    model: "claude-3-sonnet-20240229",
-    max_tokens: 4000,
-    messages: [{
-      role: "user",
-      content: `파일 구조를 최적화해주세요: ${JSON.stringify(files)}`
-    }]
-  });
+	const response = await anthropic.messages.create({
+		model: "claude-3-sonnet-20240229",
+		max_tokens: 4000,
+		messages: [
+			{
+				role: "user",
+				content: `파일 구조를 최적화해주세요: ${JSON.stringify(files)}`
+			}
+		]
+	})
 
-  return JSON.parse(response.content[0].text);
+	return JSON.parse(response.content[0].text)
 }
 ```
 
@@ -279,7 +287,8 @@ AI에게 다음과 같은 최적화 전략을 지시할 수 있습니다:
 ## 📞 지원
 
 문제가 발생하면 다음을 확인하세요:
+
 1. 서버 로그 확인
-2. API 키 유효성 확인  
+2. API 키 유효성 확인
 3. 네트워크 연결 상태
 4. 요청 데이터 형식

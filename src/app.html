@@ -1,9 +1,99 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 	<head>
 		<meta charset="utf-8" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
 		%sveltekit.head%
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+				background: hsl(0 0% 98%);
+				color: hsl(222.2 84% 4.9%);
+				line-height: 1.47059;
+				letter-spacing: -0.022em;
+				font-weight: 400;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+
+			/* ClickUp 스타일 CSS 변수 */
+			:root {
+				/* Colors */
+				--background: 0 0% 98%;
+				--foreground: 222.2 84% 4.9%;
+				--card: 0 0% 100%;
+				--card-foreground: 222.2 84% 4.9%;
+				--primary: 221.2 83.2% 53.3%;
+				--primary-foreground: 210 40% 98%;
+				--secondary: 210 40% 96%;
+				--secondary-foreground: 222.2 84% 4.9%;
+				--muted: 210 40% 96%;
+				--muted-foreground: 215.4 16.3% 46.9%;
+				--destructive: 0 84.2% 60.2%;
+				--destructive-foreground: 210 40% 98%;
+				--border: 214.3 31.8% 91.4%;
+				--input: 214.3 31.8% 91.4%;
+				--ring: 221.2 83.2% 53.3%;
+				--radius: 0.5rem;
+			}
+
+			/* ClickUp 그라데이션 클래스들 */
+			.clickup-gradient {
+				background: linear-gradient(135deg, hsl(var(--primary)) 0%, #8b5cf6 50%, #06b6d4 100%);
+			}
+
+			.clickup-text-gradient {
+				background: linear-gradient(135deg, hsl(var(--primary)) 0%, #8b5cf6 50%, #06b6d4 100%);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+			}
+
+			.clickup-card {
+				background: hsl(var(--card));
+				border: 1px solid hsl(var(--border));
+				border-radius: calc(var(--radius) + 4px);
+				box-shadow:
+					0 1px 3px 0 rgb(0 0 0 / 0.1),
+					0 1px 2px -1px rgb(0 0 0 / 0.1);
+			}
+
+			.clickup-button-primary {
+				background: linear-gradient(135deg, hsl(var(--primary)) 0%, #8b5cf6 100%);
+				color: hsl(var(--primary-foreground));
+				border: none;
+				transition: all 0.2s ease;
+			}
+
+			.clickup-button-primary:hover {
+				box-shadow: 0 8px 25px -5px hsl(var(--primary) / 0.4);
+				transform: translateY(-1px);
+			}
+
+			.clickup-button-secondary {
+				background: hsl(var(--secondary));
+				color: hsl(var(--secondary-foreground));
+				border: 1px solid hsl(var(--border));
+				transition: all 0.2s ease;
+			}
+
+			.clickup-button-secondary:hover {
+				background: hsl(var(--muted));
+				transform: translateY(-1px);
+			}
+		</style>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>

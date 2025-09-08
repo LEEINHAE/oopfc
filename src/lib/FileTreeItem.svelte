@@ -49,9 +49,9 @@
 <!-- 재귀적으로 자식 파일들 렌더링 (트리뷰에서는 확장된 경우만 표시) -->
 {#if hasChildren && isExpanded}
 	{#each file.children as childFile}
-		<svelte:self 
-			file={childFile} 
-			level={level + 1} 
+		<svelte:self
+			file={childFile}
+			level={level + 1}
 			{expandedFolders}
 			{loadingFolders}
 			{onToggleFolder}
@@ -63,55 +63,75 @@
 	.folder-link {
 		background: none;
 		border: none;
-		color: #4285f4;
+		color: #007aff;
 		cursor: pointer;
 		text-align: left;
 		font-weight: 500;
 		padding: 0;
-		text-decoration: underline;
+		text-decoration: none;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		width: 100%;
+		font-size: 17px;
+		transition: all 0.2s ease;
+		font-family: inherit;
+		outline: none;
 	}
 
 	.folder-link:hover {
-		color: #3367d6;
+		color: #0056cc;
+		transform: translateX(2px);
 	}
 
 	.folder-toggle {
 		background: none;
 		border: none;
 		cursor: pointer;
-		font-size: 1.2rem;
-		padding: 0;
+		font-size: 18px;
+		padding: 4px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		border-radius: 6px;
+		transition: all 0.2s ease;
+		color: #86868b;
+		width: 28px;
+		height: 28px;
+		outline: none;
 	}
 
 	.folder-toggle:hover {
-		opacity: 0.7;
+		background: rgba(0, 0, 0, 0.08);
+		color: #1d1d1f;
+		transform: scale(1.1);
 	}
 
 	.list-item {
 		display: grid;
-		grid-template-columns: 40px 2fr 100px 150px 80px;
-		gap: 1rem;
-		padding: 1rem;
-		border-bottom: 1px solid #f0f0f0;
+		grid-template-columns: 48px 2fr 120px 160px 88px;
+		gap: 16px;
+		padding: 16px 24px;
+		border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 		align-items: center;
-		transition: background-color 0.2s;
+		transition: all 0.2s ease;
+		position: relative;
 	}
 
 	.list-item:hover {
-		background-color: #f8f9fa;
+		background: rgba(0, 0, 0, 0.02);
+		transform: translateX(2px);
+	}
+
+	.list-item:last-child {
+		border-bottom: none;
 	}
 
 	.col-icon {
 		display: flex;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start;
+		gap: 8px;
 	}
 
 	.col-name {
@@ -120,12 +140,14 @@
 
 	.col-size,
 	.col-date {
-		font-size: 0.85rem;
-		color: #6c757d;
+		font-size: 15px;
+		color: #86868b;
+		font-weight: 400;
+		letter-spacing: -0.016em;
 	}
 
 	.icon {
-		font-size: 1.2rem;
+		font-size: 20px;
 	}
 
 	.file-name {
@@ -133,20 +155,39 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		font-weight: 500;
+		font-size: 17px;
+		color: #1d1d1f;
+		letter-spacing: -0.022em;
 	}
 
 	.btn {
-		padding: 0.5rem 1rem;
+		padding: 8px 16px;
 		border: none;
-		border-radius: 4px;
+		border-radius: 20px;
 		cursor: pointer;
-		font-size: 0.9rem;
-		transition: background-color 0.2s;
+		font-size: 15px;
+		font-weight: 500;
+		transition: all 0.2s ease;
+		background: #007aff;
+		color: white;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		outline: none;
+		font-family: inherit;
+	}
+
+	.btn:hover {
+		background: #0056cc;
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 	}
 
 	.btn-small {
-		padding: 0.25rem 0.5rem;
-		font-size: 0.8rem;
+		padding: 6px 12px;
+		font-size: 14px;
+		min-height: 32px;
 	}
 
 	@media (max-width: 768px) {

@@ -1,5 +1,6 @@
 /**
  * Google Drive API 설정 및 유틸리티 함수
+ * Google Drive 파일 관리, MISO AI 최적화, 파일 이동 기능
  */
 
 export const GOOGLE_CONFIG = {
@@ -22,6 +23,8 @@ export function loadGoogleScripts() {
 
 /**
  * 스크립트 동적 로드 헬퍼
+ * @param {string} src - 로드할 스크립트 URL
+ * @returns {Promise<void>}
  */
 function loadScript(src) {
 	return new Promise((resolve, reject) => {
@@ -39,6 +42,7 @@ function loadScript(src) {
 
 /**
  * Google API 클라이언트 초기화
+ * @returns {Promise<void>}
  */
 export async function initializeGoogleAPI() {
 	return new Promise((resolve, reject) => {
@@ -57,6 +61,8 @@ export async function initializeGoogleAPI() {
 
 /**
  * OAuth 토큰 클라이언트 생성
+ * @param {Function} callback - 인증 완료 콜백
+ * @returns {Object} 토큰 클라이언트
  */
 export function createTokenClient(callback) {
 	return window.google.accounts.oauth2.initTokenClient({
@@ -72,7 +78,7 @@ export function createTokenClient(callback) {
 export async function fetchDriveFiles(options = {}) {
 	const { pageSize = 50, orderBy = "modifiedTime desc", q = null } = options
 
-	// 루트 디렉토리의 파일들만 가져오기
+	// 루트 디렉토리의 파일들만 가져오기 (Google Drive API 최적화)
 	let query = "'root' in parents and trashed=false and 'me' in owners"
 	if (q) {
 		query += ` and (${q})`
@@ -296,34 +302,6 @@ export async function moveFile(fileId, newParentId, oldParentId = null) {
 }
 
 /**
- * 여러 파일의 부모 정보를 한 번에 조회 (배치 최적화)
- */
-export async function getFileParents(fileIds) {
-	const parentMap = new Map()
-
-	// 병렬로 모든 파일의 부모 정보 조회
-	const parentPromises = fileIds.map(async (fileId) => {
-		try {
-			const fileInfo = await window.gapi.client.drive.files.get({
-				fileId: fileId,
-				fields: "parents"
-			})
-			return { fileId, parentId: fileInfo.result.parents?.[0] }
-		} catch (error) {
-			console.warn(`파일 부모 조회 실패: ${fileId}`, error)
-			return { fileId, parentId: null }
-		}
-	})
-
-	const results = await Promise.all(parentPromises)
-	results.forEach(({ fileId, parentId }) => {
-		parentMap.set(fileId, parentId)
-	})
-
-	return parentMap
-}
-
-/**
  * MISO 워크플로우 API를 통한 파일 구조 최적화
  */
 export async function optimizeWithMISOWorkflow(files, apiKey) {
@@ -334,7 +312,7 @@ export async function optimizeWithMISOWorkflow(files, apiKey) {
 		console.log("📊 파일 개수:", files.length)
 
 		// 1. 파일 데이터를 압축된 JSON으로 변환하여 업로드
-		const compactFiles = files.map(file => ({
+		const compactFiles = files.map((file) => ({
 			id: file.id,
 			name: file.name,
 			mimeType: file.mimeType,
@@ -342,7 +320,7 @@ export async function optimizeWithMISOWorkflow(files, apiKey) {
 			modifiedTime: file.modifiedTime,
 			size: file.size
 		}))
-		
+
 		const jsonContent = JSON.stringify(compactFiles) // 압축 형식
 		const fileName = `drive-files-${Date.now()}.json`
 
@@ -362,14 +340,20 @@ export async function optimizeWithMISOWorkflow(files, apiKey) {
 			user: "drive-optimizer"
 		}
 
-		console.log("📝 요청 본문:", { ...requestBody, inputs: { ...requestBody.inputs, input: { ...requestBody.inputs.input, upload_file_id: "..." } } })
+		console.log("📝 요청 본문:", {
+			...requestBody,
+			inputs: {
+				...requestBody.inputs,
+				input: { ...requestBody.inputs.input, upload_file_id: "..." }
+			}
+		})
 
 		const response = await fetch(workflowUrl, {
 			method: "POST",
 			headers: {
 				Authorization: `Bearer ${apiKey}`,
 				"Content-Type": "application/json",
-				"Accept": "application/json"
+				Accept: "application/json"
 			},
 			body: JSON.stringify(requestBody)
 		})
@@ -379,15 +363,17 @@ export async function optimizeWithMISOWorkflow(files, apiKey) {
 		if (!response.ok) {
 			const errorText = await response.text()
 			const errorData = tryParseJSON(errorText)
-			
+
 			console.error("❌ MISO API 오류 상세:")
 			console.error("- 상태 코드:", response.status)
 			console.error("- 상태 텍스트:", response.statusText)
 			console.error("- 오류 메시지:", errorData?.message || errorText)
-			
+
 			// 502 Bad Gateway는 보통 서버 타임아웃이나 과부하
 			if (response.status === 502) {
-				throw new Error(`서버 타임아웃 또는 과부하 (502): 파일이 너무 많거나 요청이 복잡합니다. 파일 수를 줄이거나 잠시 후 다시 시도해주세요.`)
+				throw new Error(
+					`서버 타임아웃 또는 과부하 (502): 파일이 너무 많거나 요청이 복잡합니다. 파일 수를 줄이거나 잠시 후 다시 시도해주세요.`
+				)
 			}
 
 			throw new Error(`MISO API 오류 (${response.status}): ${errorData?.message || errorText}`)
@@ -396,12 +382,14 @@ export async function optimizeWithMISOWorkflow(files, apiKey) {
 		return await handleWorkflowResponse(response)
 	} catch (error) {
 		console.error("❌ MISO 워크플로우 API 오류:", error)
-		
+
 		// CORS 오류 감지 및 친화적 메시지
 		if (error.message.includes("NetworkError") || error.message.includes("CORS")) {
-			throw new Error("네트워크 연결 오류 또는 CORS 정책으로 인한 차단입니다. 브라우저의 CORS 확장 프로그램을 사용하거나 서버 설정을 확인해주세요.")
+			throw new Error(
+				"네트워크 연결 오류 또는 CORS 정책으로 인한 차단입니다. 브라우저의 CORS 확장 프로그램을 사용하거나 서버 설정을 확인해주세요."
+			)
 		}
-		
+
 		throw error
 	}
 }
@@ -442,19 +430,18 @@ async function handleWorkflowResponse(response) {
 	}
 
 	console.log("🔍 MISO 응답 result 내용:", typeof resultStr, resultStr.substring(0, 200) + "...")
-	
+
 	let optimizedFiles
 
 	// resultStr는 이미 JSON 문자열이므로 직접 파싱
 	try {
 		optimizedFiles = JSON.parse(resultStr)
 		console.log("✅ JSON 파싱 성공:", optimizedFiles.length, "개 항목")
-		
+
 		// 새 응답 형식: hierarchical structure를 flat array로 변환
 		if (Array.isArray(optimizedFiles) && optimizedFiles.length > 0) {
 			optimizedFiles = convertHierarchicalToFlat(optimizedFiles)
 		}
-		
 	} catch (parseError) {
 		console.warn("⚠️ 직접 JSON 파싱 실패, 문자열에서 JSON 추출 시도:", parseError.message)
 		console.log("📝 파싱할 문자열:", resultStr)
@@ -473,12 +460,12 @@ async function handleWorkflowResponse(response) {
 				try {
 					optimizedFiles = JSON.parse(jsonStr)
 					console.log("✅ 패턴 매칭으로 JSON 파싱 성공:", optimizedFiles.length, "개 항목")
-					
+
 					// 새 응답 형식 처리
 					if (Array.isArray(optimizedFiles) && optimizedFiles.length > 0) {
 						optimizedFiles = convertHierarchicalToFlat(optimizedFiles)
 					}
-					
+
 					break
 				} catch (e) {
 					console.warn("❌ 패턴 매칭 실패:", pattern, e.message)
@@ -488,7 +475,9 @@ async function handleWorkflowResponse(response) {
 		}
 
 		if (!optimizedFiles) {
-			throw new Error(`MISO 응답에서 유효한 JSON을 찾을 수 없습니다. 응답 타입: ${typeof resultStr}, 내용: ${resultStr.substring(0, 500)}`)
+			throw new Error(
+				`MISO 응답에서 유효한 JSON을 찾을 수 없습니다. 응답 타입: ${typeof resultStr}, 내용: ${resultStr.substring(0, 500)}`
+			)
 		}
 	}
 
@@ -505,11 +494,11 @@ async function handleWorkflowResponse(response) {
  */
 function convertHierarchicalToFlat(hierarchicalData) {
 	const flatFiles = []
-	
+
 	function traverse(items) {
 		if (!Array.isArray(items)) return
-		
-		items.forEach(item => {
+
+		items.forEach((item) => {
 			// 파일/폴더 정보를 평면 배열에 추가
 			const flatItem = {
 				id: item.id,
@@ -521,13 +510,13 @@ function convertHierarchicalToFlat(hierarchicalData) {
 				webViewLink: item.webViewLink,
 				size: item.size
 			}
-			
+
 			flatFiles.push(flatItem)
-			
+
 			// children이 있으면 재귀적으로 처리
 			if (item.children && Array.isArray(item.children) && item.children.length > 0) {
 				// children의 parent 정보를 현재 item의 id로 설정
-				item.children.forEach(child => {
+				item.children.forEach((child) => {
 					if (!child.parents) {
 						child.parents = [item.id]
 					}
@@ -536,7 +525,7 @@ function convertHierarchicalToFlat(hierarchicalData) {
 			}
 		})
 	}
-	
+
 	traverse(hierarchicalData)
 	console.log(`📊 계층적 구조를 평면 배열로 변환: ${flatFiles.length}개 파일`)
 	return flatFiles
@@ -572,50 +561,6 @@ export async function uploadFileToMISO(fileContent, fileName, apiKey) {
 }
 
 /**
- * MISO API 채팅 호출 (대화 유지)
- */
-export async function sendChatToMISO(
-	query,
-	conversationId = "",
-	files = [],
-	apiKey = "",
-	apiUrl = ""
-) {
-	if (!apiUrl) {
-		apiUrl = "https://api.holdings.miso.gs/ext/v1/chat"
-	}
-
-	const requestBody = {
-		inputs: {
-			file: []
-		},
-		query: query,
-		mode: "blocking",
-		conversation_id: conversationId,
-		user: "drive-optimizer",
-		files: files
-	}
-
-	const response = await fetch(apiUrl, {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${apiKey}`,
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify(requestBody)
-	})
-
-	if (!response.ok) {
-		const errorText = await response.text()
-		throw new Error(
-			`MISO AI API 호출 실패: ${response.status} ${response.statusText} - ${errorText}`
-		)
-	}
-
-	return await response.json()
-}
-
-/**
  * MISO 워크플로우 API를 통한 구조 최적화 (새 버전)
  */
 export async function optimizeStructureWithAI(
@@ -624,7 +569,6 @@ export async function optimizeStructureWithAI(
 	apiKey = "",
 	onProgress = null
 ) {
-	// 새로운 워크플로우 API 사용
 	if (onProgress) onProgress("MISO 워크플로우 API로 최적화 중...")
 
 	try {

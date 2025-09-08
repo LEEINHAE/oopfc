@@ -49,6 +49,7 @@ VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 2. **AI 분석**: 업로드된 파일을 참조하여 구조 최적화 요청
 
 #### 파일 업로드 API
+
 ```bash
 POST https://api.holdings.miso.gs/ext/v1/files/upload
 Authorization: Bearer {API_KEY}
@@ -58,20 +59,23 @@ file: drive-files.json
 ```
 
 #### AI 분석 API 요청 형식
+
 ```json
 {
-  "inputs": {
-    "file": []
-  },
-  "query": "업로드된 JSON 파일에 포함된 Google Drive 파일들을 분석하여 더 나은 폴더 구조로 최적화해주세요.",
-  "mode": "blocking",
-  "conversation_id": "",
-  "user": "drive-optimizer",
-  "files": [{
-    "type": "file",
-    "transfer_method": "local_file", 
-    "upload_file_id": "{업로드된_파일_ID}"
-  }]
+	"inputs": {
+		"file": []
+	},
+	"query": "업로드된 JSON 파일에 포함된 Google Drive 파일들을 분석하여 더 나은 폴더 구조로 최적화해주세요.",
+	"mode": "blocking",
+	"conversation_id": "",
+	"user": "drive-optimizer",
+	"files": [
+		{
+			"type": "file",
+			"transfer_method": "local_file",
+			"upload_file_id": "{업로드된_파일_ID}"
+		}
+	]
 }
 ```
 
