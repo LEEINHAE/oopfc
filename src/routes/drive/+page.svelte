@@ -1082,7 +1082,7 @@
 	}
 
 	.hero-title {
-		font-size: 48px;
+		font-size: 36px;
 		font-weight: 700;
 		margin: 0 0 16px 0;
 		letter-spacing: -0.025em;
@@ -1092,7 +1092,7 @@
 	}
 
 	.hero-description {
-		font-size: 20px;
+		font-size: 16px;
 		color: hsl(var(--muted-foreground));
 		margin: 0;
 		font-weight: 400;
