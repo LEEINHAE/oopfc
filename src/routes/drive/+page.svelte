@@ -1675,49 +1675,6 @@
 		padding: 24px 32px 32px;
 	}
 
-	.optimization-summary h4,
-	.results-section h4 {
-		margin: 0 0 1rem 0;
-		color: #333;
-	}
-
-	.operations-list,
-	.results-list {
-		max-height: 200px;
-		overflow-y: auto;
-		border: 1px solid #e0e0e0;
-		border-radius: 4px;
-		margin-bottom: 1rem;
-	}
-
-	.operation-item,
-	.result-item {
-		padding: 0.75rem;
-		border-bottom: 1px solid #f0f0f0;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.operation-item:last-child,
-	.result-item:last-child {
-		border-bottom: none;
-	}
-
-	.operation-arrow {
-		color: #666;
-		font-weight: bold;
-	}
-
-	.file-name {
-		font-weight: 500;
-	}
-
-	.new-location {
-		color: #666;
-		font-style: italic;
-	}
-
 	.result-item.success {
 		background-color: #f8fff8;
 		color: #2e7d32;
@@ -1735,14 +1692,6 @@
 		margin-top: 32px;
 		padding-top: 20px;
 		border-top: 1px solid rgba(0, 0, 0, 0.08);
-	}
-
-	.no-changes {
-		text-align: center;
-		padding: 2rem;
-		color: #4caf50;
-		font-size: 1.1rem;
-		font-weight: 500;
 	}
 
 	.results-section {
@@ -1925,68 +1874,6 @@
 			opacity: 1;
 			transform: translateY(0);
 		}
-	}
-
-	/* AI 최적화 탭 스타일 */
-	.ai-optimization-tabs {
-		margin: 1rem 0;
-	}
-
-	.tabs-header {
-		display: flex;
-		border-bottom: 2px solid #e9ecef;
-		margin-bottom: 1rem;
-		gap: 0.5rem;
-	}
-
-	.tab-button {
-		background: none;
-		border: none;
-		padding: 0.75rem 1rem;
-		cursor: pointer;
-		font-size: 0.9rem;
-		font-weight: 500;
-		color: #6c757d;
-		border-bottom: 3px solid transparent;
-		transition: all 0.2s ease;
-		border-radius: 4px 4px 0 0;
-	}
-
-	.tab-button:hover {
-		background-color: #f8f9fa;
-		color: #495057;
-	}
-
-	.tab-button.active {
-		color: #4285f4;
-		border-bottom-color: #4285f4;
-		background-color: #f8f9fa;
-	}
-
-	.tab-content {
-		animation: fadeIn 0.3s ease-in;
-	}
-
-	.tab-content.hidden {
-		display: none;
-	}
-
-	.ai-preview-info {
-		background: #e7f3ff;
-		border: 1px solid #0066cc;
-		border-radius: 8px;
-		padding: 1rem;
-		margin-bottom: 1rem;
-	}
-
-	.ai-preview-info p {
-		margin: 0.25rem 0;
-		font-size: 0.9rem;
-		line-height: 1.4;
-	}
-
-	.ai-preview-info p:first-child {
-		color: #0066cc;
 	}
 
 	@keyframes fadeIn {

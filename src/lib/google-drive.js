@@ -288,6 +288,25 @@ export async function deleteFolder(folderId) {
  */
 export async function moveFile(fileId, newParentId, oldParentId = null) {
 	try {
+		// newParentId 검증: root가 아닌 경우 폴더인지 확인
+		if (newParentId !== "root") {
+			try {
+				const parentInfo = await window.gapi.client.drive.files.get({
+					fileId: newParentId,
+					fields: "id, name, mimeType"
+				})
+				
+				if (parentInfo.result.mimeType !== "application/vnd.google-apps.folder") {
+					throw new Error(`지정된 부모 ID가 폴더가 아닙니다: ${newParentId} (${parentInfo.result.name})`)
+				}
+			} catch (parentError) {
+				if (parentError.status === 404) {
+					throw new Error(`지정된 부모 폴더를 찾을 수 없습니다: ${newParentId}`)
+				}
+				throw parentError
+			}
+		}
+
 		// oldParentId가 없으면 API 호출로 조회
 		if (!oldParentId) {
 			const fileInfo = await window.gapi.client.drive.files.get({
@@ -321,14 +340,12 @@ export async function optimizeWithMISOWorkflow(files, apiKey) {
 		console.log("📡 MISO 워크플로우 API 호출 시작")
 		console.log("📊 파일 개수:", files.length)
 
-		// 1. 파일 데이터를 압축된 JSON으로 변환하여 업로드
+		// 1. 파일 데이터를 최소한의 정보로 압축하여 업로드 (파일 이동 결정에 필요한 정보만)
 		const compactFiles = files.map((file) => ({
 			id: file.id,
 			name: file.name,
 			mimeType: file.mimeType,
-			parents: file.parents || [],
-			modifiedTime: file.modifiedTime,
-			size: file.size
+			parents: file.parents || []
 		}))
 
 		const jsonContent = JSON.stringify(compactFiles) // 압축 형식
@@ -509,17 +526,19 @@ function convertHierarchicalToFlat(hierarchicalData) {
 		if (!Array.isArray(items)) return
 
 		items.forEach((item) => {
-			// 파일/폴더 정보를 평면 배열에 추가
+			// 파일/폴더 정보를 평면 배열에 추가 (Gen AI API 응답에서 필요한 정보만)
 			const flatItem = {
 				id: item.id,
 				name: item.name,
 				mimeType: item.mimeType,
-				parents: item.parents || [],
-				createdTime: item.createdTime,
-				modifiedTime: item.modifiedTime,
-				webViewLink: item.webViewLink,
-				size: item.size
+				parents: item.parents || []
 			}
+			
+			// UI 표시용 추가 정보가 있으면 포함
+			if (item.createdTime) flatItem.createdTime = item.createdTime
+			if (item.modifiedTime) flatItem.modifiedTime = item.modifiedTime
+			if (item.webViewLink) flatItem.webViewLink = item.webViewLink
+			if (item.size) flatItem.size = item.size
 
 			flatFiles.push(flatItem)
 
@@ -637,11 +656,17 @@ export function generateMoveOperations(originalFiles, optimizedFiles, folderIdMa
 			const optimizedParent = optimizedFile.currentParent
 
 			if (originalParent !== optimizedParent) {
+				// 새 부모 ID가 유효한지 확인 (root이거나 실제 폴더 ID여야 함)
+				if (!optimizedParent || optimizedParent === "") {
+					console.warn(`파일 ${optimizedFile.name}의 새 부모 ID가 유효하지 않음: ${optimizedParent}`)
+					continue
+				}
+
 				operations.push({
 					fileId: fileId,
 					fileName: optimizedFile.name,
 					oldParentId: originalParent || "root", // 기본값 설정으로 API 조회 최소화
-					newParentId: optimizedParent,
+					newParentId: optimizedParent || "root",
 					action: "move"
 				})
 			}
@@ -1037,10 +1062,7 @@ export function simulateOptimization(files) {
 			id: folderId,
 			name: folderName,
 			mimeType: "application/vnd.google-apps.folder",
-			parents: ["root"],
-			createdTime: new Date().toISOString(),
-			modifiedTime: new Date().toISOString(),
-			webViewLink: null
+			parents: ["root"]
 		})
 
 		// 파일들을 평면 배열에 추가 (parents가 새 폴더 ID를 가리킴)
@@ -1053,10 +1075,7 @@ export function simulateOptimization(files) {
 			id: "temp_no_extension_folder",
 			name: "확장자 없음",
 			mimeType: "application/vnd.google-apps.folder",
-			parents: ["root"],
-			createdTime: new Date().toISOString(),
-			modifiedTime: new Date().toISOString(),
-			webViewLink: null
+			parents: ["root"]
 		})
 		// 파일들을 평면 배열에 추가
 		optimizedFiles.push(...noExtensionFiles)
