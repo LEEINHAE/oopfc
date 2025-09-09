@@ -455,9 +455,9 @@
 		<!-- 히어로 섹션 -->
 		<div class="hero-section">
 			<div class="hero-content">
-				<h2 class="hero-title clickup-text-gradient">폴더 구조를 스마트하게 최적화하세요</h2>
+				<h2 class="hero-title clickup-text-gradient">데이터 체계를 스마트하게 최적화하세요</h2>
 				<p class="hero-description">
-					AI 기반 분석으로 복잡한 폴더 구조를 체계적이고 효율적으로 정리합니다
+					MISO AI 기반 분석으로 복잡한 폴더 구조를 체계적이고 효율적으로 정리합니다
 				</p>
 			</div>
 
