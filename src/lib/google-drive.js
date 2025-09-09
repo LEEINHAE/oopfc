@@ -597,7 +597,7 @@ export function generateMoveOperations(originalFiles, optimizedFiles, folderIdMa
 	console.log("🚚 generateMoveOperations 시작")
 	console.log("📄 originalFiles:", originalFiles.length, "개")
 	console.log("✨ optimizedFiles:", optimizedFiles.length, "개")
-	
+
 	const operations = []
 	const originalMap = new Map()
 	const optimizedMap = new Map()
@@ -647,12 +647,12 @@ export function generateMoveOperations(originalFiles, optimizedFiles, folderIdMa
 			}
 		}
 	}
-	
+
 	console.log("📋 생성된 이동 작업:", operations.length, "개")
 	operations.forEach((op, index) => {
 		console.log(`  ${index + 1}. ${op.fileName}: ${op.oldParentId} → ${op.newParentId}`)
 	})
-	
+
 	return operations
 }
 
@@ -793,16 +793,19 @@ export async function applyStructureOptimization(originalFiles, optimizedFiles, 
 
 	// 3. 기존 폴더들 삭제 (빈 폴더부터 삭제)
 	const foldersToDelete = findFoldersToDelete(originalFiles, optimizedFiles)
-	console.log("🗑️ 삭제할 폴더들:", foldersToDelete.map(f => f.name))
-	
+	console.log(
+		"🗑️ 삭제할 폴더들:",
+		foldersToDelete.map((f) => f.name)
+	)
+
 	if (foldersToDelete.length > 0) {
 		if (onProgress) onProgress(`${foldersToDelete.length}개의 기존 폴더 삭제 중...`)
-		
+
 		// 폴더 삭제는 순차적으로 진행 (자식 폴더부터 삭제해야 함)
 		for (const folder of foldersToDelete) {
 			try {
 				await deleteFolder(folder.id)
-				
+
 				if (onProgress)
 					onProgress(`폴더 삭제 완료: ${folder.name}`, {
 						type: "folder-delete",
@@ -810,7 +813,7 @@ export async function applyStructureOptimization(originalFiles, optimizedFiles, 
 						name: folder.name,
 						id: folder.id
 					})
-				
+
 				results.push({
 					type: "delete",
 					success: true,
@@ -825,7 +828,7 @@ export async function applyStructureOptimization(originalFiles, optimizedFiles, 
 						name: folder.name,
 						error: error.message
 					})
-				
+
 				results.push({
 					type: "delete",
 					success: false,
@@ -893,7 +896,7 @@ function findNewFolders(originalFiles, optimizedFiles) {
 function findFoldersToDelete(originalFiles, optimizedFiles) {
 	// 최적화 결과에 포함된 폴더 ID들 수집
 	const optimizedFolderIds = new Set()
-	
+
 	function collectOptimizedFolderIds(files) {
 		files.forEach((file) => {
 			if (file.mimeType === "application/vnd.google-apps.folder") {
@@ -904,12 +907,12 @@ function findFoldersToDelete(originalFiles, optimizedFiles) {
 			}
 		})
 	}
-	
+
 	collectOptimizedFolderIds(optimizedFiles)
-	
+
 	// 원본에서 폴더들 찾기
 	const originalFolders = []
-	
+
 	function collectOriginalFolders(files) {
 		files.forEach((file) => {
 			if (file.mimeType === "application/vnd.google-apps.folder") {
@@ -920,14 +923,12 @@ function findFoldersToDelete(originalFiles, optimizedFiles) {
 			}
 		})
 	}
-	
+
 	collectOriginalFolders(originalFiles)
-	
+
 	// 최적화 결과에 없는 폴더들을 삭제 대상으로 선정
-	const foldersToDelete = originalFolders.filter(folder => 
-		!optimizedFolderIds.has(folder.id)
-	)
-	
+	const foldersToDelete = originalFolders.filter((folder) => !optimizedFolderIds.has(folder.id))
+
 	// 폴더 삭제 순서: 자식 폴더부터 삭제 (깊이 순 내림차순)
 	return foldersToDelete.sort((a, b) => {
 		const depthA = getPathDepth(a, originalFiles)
@@ -942,14 +943,14 @@ function findFoldersToDelete(originalFiles, optimizedFiles) {
 function getPathDepth(targetFolder, allFiles) {
 	let depth = 0
 	let currentId = targetFolder.parents?.[0]
-	
+
 	while (currentId && currentId !== "root") {
 		depth++
-		const parentFolder = allFiles.find(f => f.id === currentId)
+		const parentFolder = allFiles.find((f) => f.id === currentId)
 		if (!parentFolder) break
 		currentId = parentFolder.parents?.[0]
 	}
-	
+
 	return depth
 }
 
@@ -998,8 +999,8 @@ export function simulateOptimization(files) {
 		}
 
 		const fileName = file.name
-		const lastDotIndex = fileName.lastIndexOf('.')
-		
+		const lastDotIndex = fileName.lastIndexOf(".")
+
 		if (lastDotIndex === -1 || lastDotIndex === fileName.length - 1) {
 			// 확장자가 없는 파일들
 			noExtensionFiles.push({
@@ -1011,14 +1012,14 @@ export function simulateOptimization(files) {
 		}
 
 		const extension = fileName.substring(lastDotIndex).toLowerCase()
-		
+
 		if (!extensionGroups[extension]) {
 			extensionGroups[extension] = []
 		}
-		
+
 		extensionGroups[extension].push({
 			...file,
-			parents: [`temp_${extension.replace('.', '')}_folder`],
+			parents: [`temp_${extension.replace(".", "")}_folder`],
 			children: []
 		})
 	})
@@ -1029,7 +1030,7 @@ export function simulateOptimization(files) {
 	// 확장자별 폴더 생성 및 파일 추가
 	Object.entries(extensionGroups).forEach(([extension, extensionFiles]) => {
 		const folderName = `${extension.toUpperCase()} 파일`
-		const folderId = `temp_${extension.replace('.', '')}_folder`
+		const folderId = `temp_${extension.replace(".", "")}_folder`
 
 		// 확장자별 폴더 생성
 		optimizedFiles.push({
@@ -1070,8 +1071,10 @@ export function simulateOptimization(files) {
 	console.log("📁 무시된 폴더:", foldersIgnored.length, "개")
 	console.log("📋 최종 optimizedFiles 배열:", optimizedFiles.length, "개 항목")
 	console.log("🔍 optimizedFiles 구조:")
-	optimizedFiles.forEach(file => {
-		console.log(`  - ${file.name} (${file.mimeType === "application/vnd.google-apps.folder" ? "폴더" : "파일"}) parents: ${file.parents}`)
+	optimizedFiles.forEach((file) => {
+		console.log(
+			`  - ${file.name} (${file.mimeType === "application/vnd.google-apps.folder" ? "폴더" : "파일"}) parents: ${file.parents}`
+		)
 	})
 
 	return optimizedFiles
@@ -1084,10 +1087,10 @@ export function generateStructureComparison(originalFiles, optimizedFiles) {
 	console.log("🔍 generateStructureComparison 시작")
 	console.log("📄 originalFiles:", originalFiles.length, "개")
 	console.log("✨ optimizedFiles:", optimizedFiles.length, "개")
-	
+
 	const originalStructure = organizeFilesAsTree(originalFiles)
 	const optimizedStructure = organizeFilesAsTree(optimizedFiles)
-	
+
 	console.log("🌳 originalStructure.rootFiles:", originalStructure.rootFiles.length, "개")
 	console.log("🌳 optimizedStructure.rootFiles:", optimizedStructure.rootFiles.length, "개")
 
@@ -1110,13 +1113,13 @@ export function generateStructureComparison(originalFiles, optimizedFiles) {
 	})
 
 	// 원본에서 폴더들 찾기 (삭제 대상)
-	const originalFolders = originalFiles.filter(file => 
-		file.mimeType === "application/vnd.google-apps.folder"
+	const originalFolders = originalFiles.filter(
+		(file) => file.mimeType === "application/vnd.google-apps.folder"
 	)
 
 	// 최적화된 파일에서 원본 폴더 ID가 없는 경우 삭제된 것으로 간주
 	for (const folder of originalFolders) {
-		const existsInOptimized = optimizedFiles.some(file => file.id === folder.id)
+		const existsInOptimized = optimizedFiles.some((file) => file.id === folder.id)
 		if (!existsInOptimized) {
 			const folderPath = getFilePath(folder, originalFiles, originalParentMap)
 			deletedFolders.push({
@@ -1172,8 +1175,11 @@ export function generateStructureComparison(originalFiles, optimizedFiles) {
 			movedFiles,
 			newFolders,
 			deletedFolders,
-			totalFiles: originalFiles.filter(f => f.mimeType !== "application/vnd.google-apps.folder").length,
-			totalOptimizedFiles: optimizedFiles.filter(f => f.mimeType !== "application/vnd.google-apps.folder").length,
+			totalFiles: originalFiles.filter((f) => f.mimeType !== "application/vnd.google-apps.folder")
+				.length,
+			totalOptimizedFiles: optimizedFiles.filter(
+				(f) => f.mimeType !== "application/vnd.google-apps.folder"
+			).length,
 			totalOriginalFolders: originalFolders.length,
 			totalDeletedFolders: deletedFolders.length
 		}

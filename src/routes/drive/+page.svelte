@@ -433,8 +433,8 @@
 				</svg>
 			</div>
 			<div class="header-text">
-				<h1 class="clickup-text-gradient">폴더 구조 최적화</h1>
-				<p>AI 기반 스마트 폴더 관리</p>
+				<h1 class="clickup-text-gradient">Ready. Set. AI</h1>
+				<p>AI 기반 데이터 구조 최적화</p>
 			</div>
 		</div>
 		{#if isSignedIn}
