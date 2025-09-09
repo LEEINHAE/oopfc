@@ -406,7 +406,6 @@
 		showMovementModal = false
 		fileMovementLogs = []
 	}
-
 </script>
 
 <svelte:head>
@@ -457,7 +456,7 @@
 			<div class="hero-content">
 				<h2 class="hero-title clickup-text-gradient">데이터 체계를 스마트하게 최적화하세요</h2>
 				<p class="hero-description">
-					MISO AI 기반 분석으로 복잡한 폴더 구조를 체계적이고 효율적으로 정리합니다
+					MISO AI 분석으로 복잡한 구조를 체계적이고 효율적으로 정리합니다
 				</p>
 			</div>
 
@@ -632,9 +631,9 @@
 								stroke="currentColor"
 								stroke-width="2"
 							>
-								<path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
-								<path d="M8 21v-4a2 2 0 012-2h4a2 2 0 012 2v4"/>
-								<path d="M7 7h10"/>
+								<path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+								<path d="M8 21v-4a2 2 0 012-2h4a2 2 0 012 2v4" />
+								<path d="M7 7h10" />
 							</svg>
 							{#if isSimulating}
 								분류 중...
@@ -781,7 +780,10 @@
 				{#if aiStructureComparison}
 					<div class="preview-info">
 						<p><strong>🧠 AI가 분석한 최적화된 구조를 미리 확인하세요.</strong></p>
-						<p>실제 파일은 아직 이동되지 않았습니다. "최적화 적용" 버튼을 눌러야 실제 이동이 시작됩니다.</p>
+						<p>
+							실제 파일은 아직 이동되지 않았습니다. "최적화 적용" 버튼을 눌러야 실제 이동이
+							시작됩니다.
+						</p>
 					</div>
 
 					<StructureComparisonView comparison={aiStructureComparison} />
