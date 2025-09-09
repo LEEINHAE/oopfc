@@ -274,6 +274,16 @@ export async function createFolder(name, parentId = "root") {
 }
 
 /**
+ * 폴더 삭제
+ */
+export async function deleteFolder(folderId) {
+	const response = await window.gapi.client.drive.files.delete({
+		fileId: folderId
+	})
+	return response.result
+}
+
+/**
  * 파일 또는 폴더 이동 (최적화된 버전)
  */
 export async function moveFile(fileId, newParentId, oldParentId = null) {
@@ -771,6 +781,52 @@ export async function applyStructureOptimization(originalFiles, optimizedFiles, 
 			)
 	}
 
+	// 3. 기존 폴더들 삭제 (빈 폴더부터 삭제)
+	const foldersToDelete = findFoldersToDelete(originalFiles, optimizedFiles)
+	console.log("🗑️ 삭제할 폴더들:", foldersToDelete.map(f => f.name))
+	
+	if (foldersToDelete.length > 0) {
+		if (onProgress) onProgress(`${foldersToDelete.length}개의 기존 폴더 삭제 중...`)
+		
+		// 폴더 삭제는 순차적으로 진행 (자식 폴더부터 삭제해야 함)
+		for (const folder of foldersToDelete) {
+			try {
+				await deleteFolder(folder.id)
+				
+				if (onProgress)
+					onProgress(`폴더 삭제 완료: ${folder.name}`, {
+						type: "folder-delete",
+						success: true,
+						name: folder.name,
+						id: folder.id
+					})
+				
+				results.push({
+					type: "delete",
+					success: true,
+					folder: folder.name,
+					id: folder.id
+				})
+			} catch (error) {
+				if (onProgress)
+					onProgress(`폴더 삭제 실패: ${folder.name}`, {
+						type: "folder-delete",
+						success: false,
+						name: folder.name,
+						error: error.message
+					})
+				
+				results.push({
+					type: "delete",
+					success: false,
+					folder: folder.name,
+					id: folder.id,
+					error: error.message
+				})
+			}
+		}
+	}
+
 	return results
 }
 
@@ -819,6 +875,72 @@ function findNewFolders(originalFiles, optimizedFiles) {
 	}
 
 	return newFolders
+}
+
+/**
+ * 삭제해야 할 폴더들 찾기 (자식 폴더부터 삭제 순서로 정렬)
+ */
+function findFoldersToDelete(originalFiles, optimizedFiles) {
+	// 최적화 결과에 포함된 폴더 ID들 수집
+	const optimizedFolderIds = new Set()
+	
+	function collectOptimizedFolderIds(files) {
+		files.forEach((file) => {
+			if (file.mimeType === "application/vnd.google-apps.folder") {
+				optimizedFolderIds.add(file.id)
+			}
+			if (file.children && file.children.length > 0) {
+				collectOptimizedFolderIds(file.children)
+			}
+		})
+	}
+	
+	collectOptimizedFolderIds(optimizedFiles)
+	
+	// 원본에서 폴더들 찾기
+	const originalFolders = []
+	
+	function collectOriginalFolders(files) {
+		files.forEach((file) => {
+			if (file.mimeType === "application/vnd.google-apps.folder") {
+				originalFolders.push(file)
+			}
+			if (file.children && file.children.length > 0) {
+				collectOriginalFolders(file.children)
+			}
+		})
+	}
+	
+	collectOriginalFolders(originalFiles)
+	
+	// 최적화 결과에 없는 폴더들을 삭제 대상으로 선정
+	const foldersToDelete = originalFolders.filter(folder => 
+		!optimizedFolderIds.has(folder.id)
+	)
+	
+	// 폴더 삭제 순서: 자식 폴더부터 삭제 (깊이 순 내림차순)
+	return foldersToDelete.sort((a, b) => {
+		const depthA = getPathDepth(a, originalFiles)
+		const depthB = getPathDepth(b, originalFiles)
+		return depthB - depthA // 깊은 폴더부터 삭제
+	})
+}
+
+/**
+ * 폴더의 경로 깊이 계산
+ */
+function getPathDepth(targetFolder, allFiles) {
+	let depth = 0
+	let currentId = targetFolder.parents?.[0]
+	
+	while (currentId && currentId !== "root") {
+		depth++
+		const parentFolder = allFiles.find(f => f.id === currentId)
+		if (!parentFolder) break
+		currentId = parentFolder.parents?.[0]
+	}
+	
+	return depth
 }
 
 /**
@@ -911,8 +1033,7 @@ export function simulateOptimization(files) {
 			children: extensionFiles
 		})
 
-		// 파일들 추가
-		optimizedFiles.push(...extensionFiles)
+		// 파일들은 폴더의 children으로만 존재 (루트에 중복 추가하지 않음)
 	})
 
 	// 확장자가 없는 파일들이 있으면 별도 폴더 생성
@@ -927,7 +1048,7 @@ export function simulateOptimization(files) {
 			webViewLink: null,
 			children: noExtensionFiles
 		})
-		optimizedFiles.push(...noExtensionFiles)
+		// 파일들은 폴더의 children으로만 존재 (루트에 중복 추가하지 않음)
 	}
 
 	console.log("✨ 시뮬레이션 완료!")

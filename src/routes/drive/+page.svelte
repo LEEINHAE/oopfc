@@ -998,6 +998,12 @@
 											{:else}
 												❌ 파일 이동 실패: <strong>{log.name}</strong> - {log.error}
 											{/if}
+										{:else if log.type === "folder-delete"}
+											{#if log.success}
+												🗑️ 폴더 삭제 완료: <strong>{log.name}</strong>
+											{:else}
+												❌ 폴더 삭제 실패: <strong>{log.name}</strong> - {log.error}
+											{/if}
 										{/if}
 									</div>
 								</div>
