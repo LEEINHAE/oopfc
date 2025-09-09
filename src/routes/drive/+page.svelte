@@ -407,32 +407,6 @@
 		fileMovementLogs = []
 	}
 
-	// AI 최적화 모달의 탭 전환
-	function switchAiOptimizationTab(event) {
-		const clickedTab = event.target.getAttribute("data-tab")
-		if (!clickedTab) return
-
-		// 모든 탭 버튼에서 active 클래스 제거
-		const tabButtons = event.target.parentElement.querySelectorAll(".tab-button")
-		tabButtons.forEach((btn) => btn.classList.remove("active"))
-
-		// 클릭된 탭에 active 클래스 추가
-		event.target.classList.add("active")
-
-		// 모든 탭 콘텐츠 숨김
-		const tabContents = event.target
-			.closest(".ai-optimization-tabs")
-			.querySelectorAll(".tab-content")
-		tabContents.forEach((content) => content.classList.add("hidden"))
-
-		// 선택된 탭 콘텐츠만 표시
-		const targetContent = event.target
-			.closest(".ai-optimization-tabs")
-			.querySelector(`[data-content="${clickedTab}"]`)
-		if (targetContent) {
-			targetContent.classList.remove("hidden")
-		}
-	}
 </script>
 
 <svelte:head>
@@ -797,80 +771,20 @@
 <!-- AI 최적화 모달 -->
 {#if showOptimizationModal}
 	<div class="modal-overlay" onclick={closeOptimizationModal}>
-		<div class="modal-content" onclick={(e) => e.stopPropagation()}>
+		<div class="modal-content large-modal" onclick={(e) => e.stopPropagation()}>
 			<div class="modal-header">
 				<h3>🤖 AI 구조 최적화 결과</h3>
 				<button class="modal-close" onclick={closeOptimizationModal}>×</button>
 			</div>
 
 			<div class="modal-body">
-				{#if aiStructureComparison && moveOperations.length > 0}
-					<div class="ai-optimization-tabs">
-						<div class="tabs-header">
-							<button class="tab-button active" data-tab="preview" onclick={switchAiOptimizationTab}
-								>🔍 구조 미리보기</button
-							>
-							<button class="tab-button" data-tab="operations" onclick={switchAiOptimizationTab}
-								>📋 이동 계획</button
-							>
-						</div>
-
-						<div class="tab-content" data-content="preview">
-							<div class="ai-preview-info">
-								<p><strong>🧠 AI가 분석한 최적화된 구조를 미리 확인하세요.</strong></p>
-								<p>
-									실제 파일은 아직 이동되지 않았습니다. "최적화 적용" 버튼을 눌러야 실제 이동이
-									시작됩니다.
-								</p>
-							</div>
-							<StructureComparisonView comparison={aiStructureComparison} />
-						</div>
-
-						<div class="tab-content hidden" data-content="operations">
-							<div class="optimization-summary">
-								<h4>📋 이동 계획 ({moveOperations.length}개 작업)</h4>
-								<div class="operations-list">
-									{#each moveOperations as operation}
-										<div class="operation-item">
-											<span class="file-name">📄 {operation.fileName}</span>
-											<span class="operation-arrow">→</span>
-											<span class="new-location">새 위치로 이동</span>
-										</div>
-									{/each}
-								</div>
-							</div>
-						</div>
-
-						<div class="modal-actions">
-							<button class="btn btn-primary" onclick={applyOptimization} disabled={isOptimizing}>
-								{#if isOptimizing}
-									🔄 적용 중...
-								{:else}
-									✅ 최적화 적용
-								{/if}
-							</button>
-							<button
-								class="btn btn-secondary"
-								onclick={closeOptimizationModal}
-								disabled={isOptimizing}
-							>
-								❌ 취소
-							</button>
-						</div>
+				{#if aiStructureComparison}
+					<div class="preview-info">
+						<p><strong>🧠 AI가 분석한 최적화된 구조를 미리 확인하세요.</strong></p>
+						<p>실제 파일은 아직 이동되지 않았습니다. "최적화 적용" 버튼을 눌러야 실제 이동이 시작됩니다.</p>
 					</div>
-				{:else if moveOperations.length > 0}
-					<div class="optimization-summary">
-						<h4>📋 이동 계획 ({moveOperations.length}개 작업)</h4>
-						<div class="operations-list">
-							{#each moveOperations as operation}
-								<div class="operation-item">
-									<span class="file-name">📄 {operation.fileName}</span>
-									<span class="operation-arrow">→</span>
-									<span class="new-location">새 위치로 이동</span>
-								</div>
-							{/each}
-						</div>
-					</div>
+
+					<StructureComparisonView comparison={aiStructureComparison} />
 
 					<div class="modal-actions">
 						<button class="btn btn-primary" onclick={applyOptimization} disabled={isOptimizing}>
@@ -885,11 +799,13 @@
 							onclick={closeOptimizationModal}
 							disabled={isOptimizing}
 						>
-							❌ 취소
+							닫기
 						</button>
 					</div>
 				{:else}
-					<div class="no-changes">✨ 현재 구조가 이미 최적화되어 있습니다!</div>
+					<div class="preview-info">
+						<p>AI 최적화가 진행 중입니다...</p>
+					</div>
 				{/if}
 
 				{#if optimizationResult}
