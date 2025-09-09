@@ -594,6 +594,10 @@ export async function optimizeStructureWithAI(
  * 구조 차이 분석 및 이동 계획 생성
  */
 export function generateMoveOperations(originalFiles, optimizedFiles, folderIdMap = new Map()) {
+	console.log("🚚 generateMoveOperations 시작")
+	console.log("📄 originalFiles:", originalFiles.length, "개")
+	console.log("✨ optimizedFiles:", optimizedFiles.length, "개")
+	
 	const operations = []
 	const originalMap = new Map()
 	const optimizedMap = new Map()
@@ -643,6 +647,12 @@ export function generateMoveOperations(originalFiles, optimizedFiles, folderIdMa
 			}
 		}
 	}
+	
+	console.log("📋 생성된 이동 작업:", operations.length, "개")
+	operations.forEach((op, index) => {
+		console.log(`  ${index + 1}. ${op.fileName}: ${op.oldParentId} → ${op.newParentId}`)
+	})
+	
 	return operations
 }
 
@@ -1013,7 +1023,7 @@ export function simulateOptimization(files) {
 		})
 	})
 
-	// 최적화된 파일 구조 생성
+	// 최적화된 파일 구조 생성 (평면 배열로 - organizeFilesAsTree와 호환)
 	const optimizedFiles = []
 
 	// 확장자별 폴더 생성 및 파일 추가
@@ -1029,11 +1039,11 @@ export function simulateOptimization(files) {
 			parents: ["root"],
 			createdTime: new Date().toISOString(),
 			modifiedTime: new Date().toISOString(),
-			webViewLink: null,
-			children: extensionFiles
+			webViewLink: null
 		})
 
-		// 파일들은 폴더의 children으로만 존재 (루트에 중복 추가하지 않음)
+		// 파일들을 평면 배열에 추가 (parents가 새 폴더 ID를 가리킴)
+		optimizedFiles.push(...extensionFiles)
 	})
 
 	// 확장자가 없는 파일들이 있으면 별도 폴더 생성
@@ -1045,10 +1055,10 @@ export function simulateOptimization(files) {
 			parents: ["root"],
 			createdTime: new Date().toISOString(),
 			modifiedTime: new Date().toISOString(),
-			webViewLink: null,
-			children: noExtensionFiles
+			webViewLink: null
 		})
-		// 파일들은 폴더의 children으로만 존재 (루트에 중복 추가하지 않음)
+		// 파일들을 평면 배열에 추가
+		optimizedFiles.push(...noExtensionFiles)
 	}
 
 	console.log("✨ 시뮬레이션 완료!")
@@ -1058,6 +1068,11 @@ export function simulateOptimization(files) {
 	})
 	console.log("📄 확장자 없는 파일:", noExtensionFiles.length, "개")
 	console.log("📁 무시된 폴더:", foldersIgnored.length, "개")
+	console.log("📋 최종 optimizedFiles 배열:", optimizedFiles.length, "개 항목")
+	console.log("🔍 optimizedFiles 구조:")
+	optimizedFiles.forEach(file => {
+		console.log(`  - ${file.name} (${file.mimeType === "application/vnd.google-apps.folder" ? "폴더" : "파일"}) parents: ${file.parents}`)
+	})
 
 	return optimizedFiles
 }
@@ -1066,8 +1081,15 @@ export function simulateOptimization(files) {
  * 최적화 전후 구조 비교 데이터 생성
  */
 export function generateStructureComparison(originalFiles, optimizedFiles) {
+	console.log("🔍 generateStructureComparison 시작")
+	console.log("📄 originalFiles:", originalFiles.length, "개")
+	console.log("✨ optimizedFiles:", optimizedFiles.length, "개")
+	
 	const originalStructure = organizeFilesAsTree(originalFiles)
 	const optimizedStructure = organizeFilesAsTree(optimizedFiles)
+	
+	console.log("🌳 originalStructure.rootFiles:", originalStructure.rootFiles.length, "개")
+	console.log("🌳 optimizedStructure.rootFiles:", optimizedStructure.rootFiles.length, "개")
 
 	// 이동된 파일들, 새 폴더들, 삭제될 폴더들 찾기
 	const movedFiles = []
