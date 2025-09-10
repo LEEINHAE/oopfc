@@ -9,7 +9,6 @@
 		fetchFolderFiles,
 		fetchAllDriveFiles,
 		organizeFilesAsTree,
-		optimizeStructureWithAI,
 		applyStructureOptimization,
 		generateMoveOperations,
 		simulateOptimization,
@@ -28,7 +27,6 @@
 	let loadingFolders = $state(new Set()) // 로딩 중인 폴더들
 
 	// AI 최적화 관련 상태
-	let aiApiKey = $state(import.meta.env.VITE_MISO_API_KEY || "")
 	let isOptimizing = $state(false)
 	let optimizationResult = $state(null)
 	let optimizationProgress = $state("")
@@ -180,13 +178,47 @@
 		URL.revokeObjectURL(url)
 	}
 
+	// 내부 API를 통한 구조 최적화 (CORS 문제 해결)
+	async function optimizeWithInternalAPI(files, onProgress = null) {
+		try {
+			if (onProgress) onProgress("서버에서 MISO API 호출 중...")
+
+			const response = await fetch("/api/optimize", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					files: files
+				})
+			})
+
+			if (!response.ok) {
+				const errorData = await response.json()
+				throw new Error(errorData.error || `서버 오류: ${response.status}`)
+			}
+
+			const result = await response.json()
+
+			if (onProgress) {
+				const aiModel = result.metadata?.aiModel || "Unknown"
+				onProgress(`최적화 완료 (${aiModel})`)
+			}
+
+			console.log("✅ 내부 API를 통한 최적화 완료:", result.metadata)
+			return result.optimizedFiles
+		} catch (error) {
+			console.error("❌ 내부 API 최적화 오류:", error)
+
+			if (onProgress) onProgress("내부 API 오류, 로컬 시뮬레이션 사용")
+
+			// 내부 API 실패 시 로컬 시뮬레이션 사용
+			return simulateOptimization(files)
+		}
+	}
+
 	// AI로 구조 최적화 요청
 	async function optimizeWithAI() {
-		if (!aiApiKey.trim()) {
-			error = "MISO API 키를 입력해주세요."
-			return
-		}
-
 		isOptimizing = true
 		error = null
 		optimizationProgress = "모든 파일 데이터 수집 중..."
@@ -197,7 +229,7 @@
 			console.log("📊 수집된 전체 파일 개수:", allFiles.length)
 
 			optimizationProgress = "MISO AI로 구조 분석 중..."
-			const optimized = await optimizeStructureWithAI(allFiles, "", aiApiKey, (progress) => {
+			const optimized = await optimizeWithInternalAPI(allFiles, (progress) => {
 				optimizationProgress = progress
 			})
 
@@ -443,8 +475,8 @@
 					<span class="status-text connected">Google Drive</span>
 				</div>
 				<div class="status-item">
-					<div class="status-dot {aiApiKey.trim() ? 'connected' : 'disconnected'}"></div>
-					<span class="status-text {aiApiKey.trim() ? 'connected' : 'disconnected'}">MISO AI</span>
+					<div class="status-dot connected"></div>
+					<span class="status-text connected">MISO AI (서버)</span>
 				</div>
 			</div>
 		{/if}
@@ -553,24 +585,8 @@
 					/>
 				</div>
 				<div class="input-group">
-					<label for="api-key">MISO API 키</label>
-					<div class="input-with-button">
-						<input
-							id="api-key"
-							type="password"
-							bind:value={aiApiKey}
-							placeholder="API 키를 입력하세요"
-							class="api-input"
-						/>
-						<button
-							type="button"
-							class="btn clickup-button-secondary"
-							onclick={() => (aiApiKey = "app-bSZGH0mzGfJMpXsZNB0VQrh5")}
-							title="제공된 API 키 사용"
-						>
-							🔑 API 키
-						</button>
-					</div>
+					<label>MISO API 설정</label>
+					<p class="api-info">서버에서 API 키를 자동으로 관리합니다. 별도 설정이 필요 없습니다.</p>
 				</div>
 				<div class="actions-section">
 					<div class="action-buttons">
@@ -598,7 +614,7 @@
 						<button
 							class="btn btn-optimize"
 							onclick={optimizeWithAI}
-							disabled={isOptimizing || !aiApiKey.trim()}
+							disabled={isOptimizing}
 							title="MISO AI로 폴더 구조 최적화"
 						>
 							<svg
@@ -1049,10 +1065,6 @@
 		background: #22c55e;
 	}
 
-	.status-dot.disconnected {
-		background: hsl(var(--muted-foreground));
-	}
-
 	.status-text {
 		font-size: 12px;
 		font-weight: 500;
@@ -1060,10 +1072,6 @@
 
 	.status-text.connected {
 		color: #16a34a;
-	}
-
-	.status-text.disconnected {
-		color: hsl(var(--muted-foreground));
 	}
 
 	/* Hero Section */
@@ -1232,10 +1240,14 @@
 		color: hsl(var(--foreground));
 	}
 
-	.input-with-button {
-		display: flex;
-		gap: 12px;
-		align-items: center;
+	.api-info {
+		font-size: 14px;
+		color: hsl(var(--muted-foreground));
+		margin: 0;
+		padding: 8px 12px;
+		background: hsl(var(--muted));
+		border-radius: 6px;
+		border-left: 3px solid hsl(var(--primary));
 	}
 
 	.api-input {
